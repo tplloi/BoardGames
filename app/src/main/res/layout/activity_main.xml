@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="match_parent"
+	android:layout_height="match_parent"
+	android:gravity="center"
+	android:orientation="vertical">
+
+	<Button
+		android:layout_width="match_parent"
+		style="?android:attr/buttonBarButtonStyle"
+		android:layout_height="wrap_content"
+		android:text="Gobang"
+		android:background="@drawable/button"
+		android:id="@+id/btn_gobang"
+		android:onClick="onBtnClick"/>
+
+	<Button
+		android:layout_width="match_parent"
+		style="?android:attr/buttonBarButtonStyle"
+		android:layout_height="wrap_content"
+		android:text="Chinese Chess"
+		android:background="@drawable/button"
+		android:id="@+id/btn_chinese_chess"
+		android:onClick="onBtnClick"/>
+
+</LinearLayout>
+

@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <pansong291.boardgames.view.ChineseChessView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+		android:id="@+id/chinese_chess_view"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:id="@+id/txt_current"
+        android:layout_centerVertical="true"
+        android:layout_marginLeft="24dp"/>
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginRight="24dp"
+        android:layout_alignParentRight="true"
+        android:layout_centerVertical="true">
+
+        <Button
+            android:layout_width="wrap_content"
+            style="?android:attr/buttonBarButtonStyle"
+            android:layout_height="wrap_content"
+            android:text="retract"
+            android:onClick="onRetractBtnClick"
+            android:background="@drawable/button"
+            android:id="@+id/btn_retract"
+            android:padding="12dp"
+            android:textColor="#FF0000FF"/>
+
+        <Button
+            android:layout_width="wrap_content"
+            style="?android:attr/buttonBarButtonStyle"
+            android:layout_height="wrap_content"
+            android:text="reset"
+            android:onClick="onResetBtnClick"
+            android:background="@drawable/button"
+            android:id="@+id/btn_reset"
+            android:padding="12dp"
+            android:textColor="#FF0000FF"/>
+
+    </LinearLayout>
+
+</RelativeLayout>
+
