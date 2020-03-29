@@ -45,7 +45,7 @@ public class GobangActivity extends Zactivity implements GobangView.OnPieceDownL
   @Override
   public void onWinner(BoardState bs)
   {
-    if(bs == null || bs == BoardState.EMPTY)
+    if(bs == null)
       toast("DRAW !");
     else
       toast(bs.toString() + " WIN !");

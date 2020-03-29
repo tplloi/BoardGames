@@ -276,9 +276,7 @@ public class GobangView extends View
         rx = point2Row(y - board_top_y);
         // 出界判断
         if(isOutside(rx, ry)) break;
-        if(touch_point.equals(rx, ry) &&
-           board_state[rx][ry] != BoardState.BLACK &&
-           board_state[rx][ry] != BoardState.WHITE)
+        if(touch_point.equals(rx, ry) && board_state[rx][ry] == null)
         {
           // 在该位置落子
           board_state[rx][ry] = current;
@@ -417,7 +415,7 @@ public class GobangView extends View
    */
   public enum BoardState
   {
-    EMPTY,BLACK,WHITE;
+    BLACK,WHITE;
 
     public int getColor()
     {
