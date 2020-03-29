@@ -544,12 +544,26 @@ public class ChineseChessView extends View
         if(6 < x && x < 10 && 2 < y && y < 6)
         {
           return 1 == (Math.abs(select_point.x - x) + Math.abs(select_point.y - y));
+        }else if(board_state[x][y] == BoardState.B_K && select_point.y == y)
+        {
+          for(int i = 1 + x; i < select_point.x; i++)
+          {
+            if(board_state[i][y] != null) return false;
+          }
+          return true;
         }
         break;
       case B_K:// 将
         if(-1 < x && x < 3 && 2 < y && y < 6)
         {
           return 1 == (Math.abs(select_point.x - x) + Math.abs(select_point.y - y));
+        }else if(board_state[x][y] == BoardState.R_K && select_point.y == y)
+        {
+          for(int i = 1 + select_point.x; i < x; i++)
+          {
+            if(board_state[i][y] != null) return false;
+          }
+          return true;
         }
         break;
       case R_Q:// 仕
