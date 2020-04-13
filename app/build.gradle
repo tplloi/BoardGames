@@ -8,8 +8,8 @@ android {
         applicationId "pansong291.boardgames"
         minSdkVersion 14
         targetSdkVersion 21
-        versionCode 1
-        versionName "1.0"
+        versionCode 20200413
+        versionName "1.1"
     }
     buildTypes {
         release {

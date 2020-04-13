@@ -461,7 +461,7 @@ public class GobangView extends View
     void onWinner(BoardState bs);
   }
 
-  void toast(Object o)
+  private void toast(Object o)
   {
     Toast.makeText(getContext(), o.toString(), 0).show();
   }

@@ -8,6 +8,7 @@ import android.graphics.Point;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.Toast;
 import java.util.Stack;
 
 public class ChineseChessView extends View
@@ -51,6 +52,9 @@ public class ChineseChessView extends View
   Point select_point; //选中点
   Stack<Step> history; //历史记录
   boolean hasWinner; //是否产生赢家
+  OnWinnerListener onWinnerListener; //赢家监听
+
+  static final char[] CH_NUM = new char[]{'零','一','二','三','四','五','六','七','八','九'};
 
   public ChineseChessView(Context c)
   {
@@ -87,16 +91,22 @@ public class ChineseChessView extends View
   /*
    * 悔棋
    */
-  public void retract()
+  public Step retract()
   {
-    if(history.empty()) return;
+    if(history.empty()) return null;
     hasWinner = false;
     Step stp = history.pop();
     board_state[stp.to.x][stp.to.y] = stp.before;
     board_state[stp.from.x][stp.from.y] = stp.after;
-    select_point.set(stp.from.x, stp.from.y);
     switchCurrent();
+    if(history.empty()) stp = null;
+    else
+    {
+      stp = history.peek();
+      select_point.set(stp.to.x, stp.to.y);
+    }
     postInvalidate();
+    return stp;
   } //retract
 
   /*
@@ -110,6 +120,11 @@ public class ChineseChessView extends View
   public void setOnPieceDownListener(OnPieceDownListener listener)
   {
     onPieceDownListener = listener;
+  }
+
+  public void setOnWinnerListener(OnWinnerListener listener)
+  {
+    onWinnerListener = listener;
   }
 
   private void defInit()
@@ -477,9 +492,18 @@ public class ChineseChessView extends View
                 stp.to = new Point(touch_point);
                 stp.before = board_state[rx][ry];
                 stp.after = board_state[select_point.x][select_point.y];
+                stp.stepName = getStepName(rx, ry);
                 board_state[rx][ry] = stp.after;
                 board_state[select_point.x][select_point.y] = null;
                 history.push(stp);
+                if(stp.before == BoardState.R_K || stp.before == BoardState.B_K)
+                {
+                  hasWinner = true;
+                  if(onWinnerListener != null)
+                    onWinnerListener.onWinner(current);
+                }
+                if(onPieceDownListener != null)
+                  onPieceDownListener.onPieceDown(stp, current);
                 switchCurrent();
                 if(onPieceDownListener != null)
                   onPieceDownListener.afterPieceDown(current);
@@ -489,7 +513,7 @@ public class ChineseChessView extends View
         }
         // 设置选中位置
         select_point.set(rx, ry);
-        invalidate();
+        postInvalidate();
         break;
     }
     return true;
@@ -500,7 +524,6 @@ public class ChineseChessView extends View
    */
   private boolean isCorrect(int x, int y)
   {
-    if(isOutside(select_point.x, select_point.y)) return false;
     boolean b;
     switch(board_state[select_point.x][select_point.y])
     {
@@ -631,6 +654,262 @@ public class ChineseChessView extends View
   } //isCorrect
 
   /*
+   * 获取棋谱步骤名
+   */
+  private String getStepName(int x, int y)
+  {
+    StringBuilder stepName = new StringBuilder();
+    int samePieceRow = isSamePieceInSameColumn();
+    int[] pawns;
+    switch(board_state[select_point.x][select_point.y])
+    {
+      case R_P:// 兵
+        if(samePieceRow < 0)
+        {
+          stepName.append(board_state[select_point.x][select_point.y].nickName());
+          stepName.append(CH_NUM[board_column - select_point.y]);
+        }else
+        {
+          pawns = getSameColumnPawnCount(select_point.x, select_point.y);
+          switch(pawns[1])
+          {
+            case 2:
+            case 3:
+              if(pawns[0] == 0)
+                stepName.append("前");
+              else if(pawns[0] == 2)
+                stepName.append("后");
+              else if(pawns[1] == 2)
+                stepName.append("后");
+              else
+                stepName.append("中");
+              break;
+            case 4:
+            case 5:
+              stepName.append(CH_NUM[pawns[0] + 1]);
+              break;
+          }
+          stepName.append(board_state[select_point.x][select_point.y].nickName());
+        }
+        if(x == select_point.x)
+          stepName.append("平" + CH_NUM[board_column - y]);
+        else
+          stepName.append("进" + CH_NUM[1]);
+        break;
+      case B_P:// 卒
+        if(samePieceRow < 0)
+        {
+          stepName.append(board_state[select_point.x][select_point.y].nickName());
+          stepName.append(" " + (select_point.y + 1) + " ");
+        }else
+        {
+          pawns = getSameColumnPawnCount(select_point.x, select_point.y);
+          switch(pawns[1])
+          {
+            case 2:
+            case 3:
+              if(pawns[0] == 0)
+                stepName.append("后");
+              else if(pawns[0] == 2)
+                stepName.append("前");
+              else if(pawns[1] == 2)
+                stepName.append("前");
+              else
+                stepName.append("中");
+              break;
+            case 4:
+            case 5:
+              stepName.append(" " + (pawns[1] - pawns[0]) + " ");
+              break;
+          }
+          stepName.append(board_state[select_point.x][select_point.y].nickName());
+        }
+        if(x == select_point.x)
+          stepName.append("平 " + (y + 1) + " ");
+        else
+          stepName.append("进 1 ");
+        break;
+      case R_K:// 帅
+        stepName.append(board_state[select_point.x][select_point.y].nickName());
+        stepName.append(CH_NUM[board_column - select_point.y]);
+        if(x == select_point.x)
+          stepName.append("平" + CH_NUM[board_column - y]);
+        else
+        {
+          if(x < select_point.x)
+          {
+            stepName.append("进");
+          }else
+          {
+            stepName.append("退");
+          }
+          stepName.append(CH_NUM[Math.abs(x - select_point.x)]);
+        }
+        break;
+      case B_K:// 将
+        stepName.append(board_state[select_point.x][select_point.y].nickName());
+        stepName.append(" " + (select_point.y + 1) + " ");
+        if(x == select_point.x)
+          stepName.append("平 " + (y + 1) + " ");
+        else
+        {
+          if(x > select_point.x)
+          {
+            stepName.append("进 ");
+          }else
+          {
+            stepName.append("退 ");
+          }
+          stepName.append(Math.abs(x - select_point.x) + " ");
+        }
+        break;
+      case R_Q:// 仕
+      case R_B:// 相
+      case R_N:// 馬
+        if(samePieceRow < 0)
+        {
+          stepName.append(board_state[select_point.x][select_point.y].nickName());
+          stepName.append(CH_NUM[board_column - select_point.y]);
+        }else
+        {
+          if(select_point.x > samePieceRow)
+            stepName.append("后");
+          else
+            stepName.append("前");
+          stepName.append(board_state[select_point.x][select_point.y].nickName());
+        }
+        if(x < select_point.x)
+          stepName.append("进");
+        else
+          stepName.append("退");
+        stepName.append(CH_NUM[board_column - y]);
+        break;
+      case B_Q:// 士
+      case B_B:// 象
+      case B_N:// 马
+        if(samePieceRow < 0)
+        {
+          stepName.append(board_state[select_point.x][select_point.y].nickName());
+          stepName.append(" " + (select_point.y + 1) + " ");
+        }else
+        {
+          if(select_point.x < samePieceRow)
+            stepName.append("后");
+          else
+            stepName.append("前");
+          stepName.append(board_state[select_point.x][select_point.y].nickName());
+        }
+        if(x > select_point.x)
+          stepName.append("进 ");
+        else
+          stepName.append("退 ");
+        stepName.append(y + 1 + " ");
+        break;
+      case R_C:// 砲
+      case R_R:// 車
+        if(samePieceRow < 0)
+        {
+          stepName.append(board_state[select_point.x][select_point.y].nickName());
+          stepName.append(CH_NUM[board_column - select_point.y]);
+        }else
+        {
+          if(select_point.x > samePieceRow)
+            stepName.append("后");
+          else
+            stepName.append("前");
+          stepName.append(board_state[select_point.x][select_point.y].nickName());
+        }
+        if(x == select_point.x)
+          stepName.append("平" + CH_NUM[board_column - y]);
+        else
+        {
+          if(x < select_point.x)
+          {
+            stepName.append("进");
+          }else
+          {
+            stepName.append("退");
+          }
+          stepName.append(CH_NUM[Math.abs(x - select_point.x)]);
+        }
+        break;
+      case B_C:// 炮
+      case B_R:// 车
+        if(samePieceRow < 0)
+        {
+          stepName.append(board_state[select_point.x][select_point.y].nickName());
+          stepName.append(" " + (select_point.y + 1) + " ");
+        }else
+        {
+          if(select_point.x < samePieceRow)
+            stepName.append("后");
+          else
+            stepName.append("前");
+          stepName.append(board_state[select_point.x][select_point.y].nickName());
+        }
+        if(x == select_point.x)
+          stepName.append("平 " + (y + 1) + " ");
+        else
+        {
+          if(x > select_point.x)
+          {
+            stepName.append("进 ");
+          }else
+          {
+            stepName.append("退 ");
+          }
+          stepName.append(Math.abs(x - select_point.x) + " ");
+        }
+        break;
+    }
+    return stepName.toString();
+  } //getStepName
+
+  /*
+   * 同列是否有同子
+   */
+  private int isSamePieceInSameColumn()
+  {
+    for(int i = 0; i < board_row; i++)
+    {
+      if(i == select_point.x)
+        continue;
+      if(board_state[i][select_point.y] == board_state[select_point.x][select_point.y])
+        return i;
+    }
+    return -1;
+  }
+
+  /*
+   * 所有列中同列的兵数，同列中只有一个兵的除外
+   * 返回长度为2的数组
+   * [0] 表示在总个数中的定位
+   * [1] 表示总个数
+   */
+  private int[] getSameColumnPawnCount(int x, int y)
+  {
+    int[] pawns = new int[2];
+    int cInCol; //同一列中的兵数
+    for(int j = board_column - 1; j >= 0; j--)
+    {
+      cInCol = 0;
+      for(int i = 0; i < board_row; i++)
+      {
+        if(board_state[i][j] == board_state[x][y])
+        {
+          if(i == x && j == y)
+            pawns[0] = pawns[1];
+          pawns[1]++;
+          cInCol++;
+        }
+      }
+      if(cInCol == 1)
+        pawns[1]--;
+    }
+    return pawns;
+  }
+
+  /*
    * 切换落子方
    */
   private void switchCurrent()
@@ -696,8 +975,9 @@ public class ChineseChessView extends View
 
   public class Step
   {
-    Point from, to;
-    BoardState after, before;
+    public Point from, to;
+    public BoardState after, before;
+    public String stepName;
   }
 
   /*
@@ -708,7 +988,7 @@ public class ChineseChessView extends View
     /*
      * 参数x和y表示落子位置，cur为该子颜色
      */
-    void onPieceDown(int x, int y, int cur);
+    void onPieceDown(Step s, int cur);
 
     /*
      * cur为下次要落子的颜色
@@ -716,4 +996,19 @@ public class ChineseChessView extends View
     void afterPieceDown(int cur);
   }
 
+  /*
+   * 赢家监听器
+   */
+  public interface OnWinnerListener
+  {
+    /*
+     * 产生赢家
+     */
+    void onWinner(int cur);
+  }
+
+  private void toast(Object o)
+  {
+    Toast.makeText(getContext(), o.toString(), 0).show();
+  }
 }

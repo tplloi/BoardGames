@@ -7,9 +7,9 @@ import android.widget.TextView;
 import pansong291.boardgames.R;
 import pansong291.boardgames.view.ChineseChessView;
 
-public class ChineseChessActivity extends Zactivity implements ChineseChessView.OnPieceDownListener
+public class ChineseChessActivity extends Zactivity implements ChineseChessView.OnPieceDownListener, ChineseChessView.OnWinnerListener
 {
-  TextView txt_current;
+  TextView txt_current, txt_step;
   ChineseChessView chinese_chess_view;
 
   @Override
@@ -24,16 +24,18 @@ public class ChineseChessActivity extends Zactivity implements ChineseChessView.
   private void initView()
   {
     txt_current = findViewById(R.id.txt_current);
+    txt_step = findViewById(R.id.txt_step);
     chinese_chess_view = findViewById(R.id.chinese_chess_view);
     setPieceHint(Color.RED);
     chinese_chess_view.setOnPieceDownListener(this);
-    //gobang_view.setOnWinnerListener(this);
+    chinese_chess_view.setOnWinnerListener(this);
   }
 
   @Override
-  public void onPieceDown(int x, int y, int cur)
+  public void onPieceDown(ChineseChessView.Step s, int cur)
   {
-    // TODO: Implement this method
+    setStepHint(s);
+    txt_step.setTextColor(cur);
   }
 
   @Override
@@ -42,32 +44,36 @@ public class ChineseChessActivity extends Zactivity implements ChineseChessView.
     setPieceHint(cur);
   }
 
-//  @Override
-//  public void onWinner(BoardState bs)
-//  {
-//    if(bs == null || bs == BoardState.EMPTY)
-//      toast("DRAW !");
-//    else
-//      toast(bs.toString() + " WIN !");
-//  }
+  @Override
+  public void onWinner(int cur)
+  {
+    toast((cur == Color.BLACK ? "黑方": "红方") + " 胜 !");
+  }
 
   public void onRetractBtnClick(View v)
   {
-    chinese_chess_view.retract();
+    txt_step.setTextColor(chinese_chess_view.getCurrent());
+    ChineseChessView.Step stp = chinese_chess_view.retract();
     setPieceHint(chinese_chess_view.getCurrent());
+    setStepHint(stp);
   }
 
   public void onResetBtnClick(View v)
   {
     chinese_chess_view.reset();
     setPieceHint(chinese_chess_view.getCurrent());
+    setStepHint(null);
   }
 
   private void setPieceHint(int cur)
   {
-    String s = cur == Color.BLACK ? "黑方": "红方";
-    txt_current.setText(s);
+    txt_current.setText(cur == Color.BLACK ? "黑方": "红方");
     txt_current.setTextColor(cur);
+  }
+
+  private void setStepHint(ChineseChessView.Step stp)
+  {
+    txt_step.setText(stp == null ? "": stp.stepName);
   }
 
 }
